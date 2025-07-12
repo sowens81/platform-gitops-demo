@@ -1,0 +1,41 @@
+apiVersion: composition.crossplane.io/v1alpha1
+kind: Composition
+metadata:
+  name: keyvault-composition
+spec:
+  compositeTypeRef:
+    apiVersion: azure.crossplane.io/v1alpha3
+    kind: KeyVaultTemplate
+  resources:
+    - name: keyVault
+      base:
+        apiVersion: azure.crossplane.io/v1alpha3
+        kind: KeyVaultTemplate  # Use the KeyVaultTemplate XRD
+        metadata:
+          name: "{{ .spec.serviceName }}-keyvault"  # Use the service name to create a unique KeyVault
+          namespace: crossplane-system
+        spec:
+          forProvider:
+            location: "{{ .spec.location }}"  # Location is provided dynamically
+            tenantID: "<tenant-id>"  # Hardcoded Tenant ID
+            sku: standard  # Hardcoded SKU
+            accessPolicies:  # Hardcoded access policies
+              - objectId: "<object-id>"
+                permissions:
+                  secrets:
+                    - get
+                    - list
+                    - delete
+              - objectId: "<another-object-id>"
+                permissions:
+                  secrets:
+                    - get
+                    - list
+                    - delete
+      patches:
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.serviceName"
+          toFieldPath: "metadata.name"
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"

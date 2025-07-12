@@ -1,0 +1,37 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: keyvaults.azure.crossplane.io
+spec:
+  group: azure.crossplane.io
+  names:
+    kind: KeyVaultTemplate
+    plural: keyvaults
+    singular: keyvault
+  claimNames:
+    kind: KeyVaultClaim
+    plural: keyvaultclaims
+    singular: keyvaultclaim
+  connectionSecretKeys:
+    - connectionSecretKey: "keyvault-secret"
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                serviceName:
+                  type: string
+                location:
+                  type: string
+                environmentName:
+                  type: string
+                team:
+                  type: string

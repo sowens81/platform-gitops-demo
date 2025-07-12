@@ -1,0 +1,41 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: keyvault-azure
+  labels:
+    provider: azure
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: XKeyVault
+  resources:
+    - name: keyvault
+      base:
+        apiVersion: keyvault.azure.upbound.io/v1beta2
+        kind: Vault
+        metadata:
+          name: example-keyvault
+        spec:
+          forProvider:
+            location: West Europe
+            skuName: standard
+            enabledForDiskEncryption: true
+            purgeProtectionEnabled: false
+            softDeleteRetentionDays: 7
+            tenantId: dummy-tenant-id
+            resourceGroupName: dummy-rg
+      patches:
+        - fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+        - fromFieldPath: "spec.skuName"
+          toFieldPath: "spec.forProvider.skuName"
+        - fromFieldPath: "spec.enabledForDiskEncryption"
+          toFieldPath: "spec.forProvider.enabledForDiskEncryption"
+        - fromFieldPath: "spec.purgeProtectionEnabled"
+          toFieldPath: "spec.forProvider.purgeProtectionEnabled"
+        - fromFieldPath: "spec.softDeleteRetentionDays"
+          toFieldPath: "spec.forProvider.softDeleteRetentionDays"
+        - fromFieldPath: "spec.tenantId"
+          toFieldPath: "spec.forProvider.tenantId"
+        - fromFieldPath: "spec.resourceGroupName"
+          toFieldPath: "spec.forProvider.resourceGroupName"

@@ -1,0 +1,39 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: dotnetapis.azure.crossplane.io
+spec:
+  group: azure.crossplane.io
+  names:
+    kind: DotnetAPI
+    plural: dotnetapis
+    singular: dotnetapi
+  claimNames:
+    kind: DotnetAPIClaim
+    plural: dotnetapiclaims
+    singular: dotnetapiclaim
+  connectionSecretKeys:
+    - connectionSecretKey: "my-dotnet-api-secret"
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                serviceName:
+                  type: string
+                location:
+                  type: string
+                environmentName:
+                  type: string
+                tags:
+                  type: object
+                  additionalProperties:
+                    type: string

@@ -1,0 +1,110 @@
+apiVersion: composition.crossplane.io/v1alpha1
+kind: Composition
+metadata:
+  name: dotnetapi-composition
+spec:
+  compositeTypeRef:
+    apiVersion: azure.crossplane.io/v1alpha3
+    kind: DotnetAPI
+  resources:
+    - name: namespace
+      base:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: "{{ .spec.serviceName }}-namespace"
+        spec: {}
+      patches:
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.serviceName"
+          toFieldPath: "metadata.name"
+    
+    - name: resourceGroup
+      base:
+        apiVersion: azure.crossplane.io/v1alpha3
+        kind: ResourceGroup
+        metadata:
+          name: "{{ .spec.serviceName }}-rg"
+          namespace: crossplane-system
+        spec:
+          forProvider:
+            location: "{{ .spec.location }}"
+            tags: "{{ .spec.tags }}"
+      patches:
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.serviceName"
+          toFieldPath: "metadata.name"
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.tags"
+          toFieldPath: "spec.forProvider.tags"
+
+    - name: keyVault
+      base:
+        apiVersion: azure.crossplane.io/v1alpha3
+        kind: KeyVault
+        metadata:
+          name: "{{ .spec.serviceName }}-keyvault"
+          namespace: crossplane-system
+        spec:
+          forProvider:
+            location: "{{ .spec.location }}"
+            resourceGroupNameSelector:
+              matchControllerRef: true
+            sku: standard
+            tenantID: "<tenant-id>"  # Hardcoded tenant ID
+            accessPolicies:
+              - objectId: "<object-id>"  # Replace with appropriate object ID
+                permissions:
+                  secrets:
+                    - get
+                    - list
+                    - delete
+      patches:
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.serviceName"
+          toFieldPath: "metadata.name"
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+
+    - name: managedIdentity
+      base:
+        apiVersion: azure.crossplane.io/v1alpha3
+        kind: UserAssignedIdentity
+        metadata:
+          name: "{{ .spec.serviceName }}-identity"
+          namespace: crossplane-system
+        spec:
+          forProvider:
+            location: "{{ .spec.location }}"
+            resourceGroupNameSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.serviceName"
+          toFieldPath: "metadata.name"
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+
+    - name: roleAssignment
+      base:
+        apiVersion: azure.crossplane.io/v1alpha3
+        kind: RoleAssignment
+        metadata:
+          name: "{{ .spec.serviceName }}-keyvault-access"
+          namespace: crossplane-system
+        spec:
+          forProvider:
+            principalIDSelector:
+              matchControllerRef: true
+            roleDefinitionName: "Key Vault Secrets User"
+            scope: "/subscriptions/<subscription-id>/resourceGroups/{{ .spec.serviceName }}-rg/providers/Microsoft.KeyVault/vaults/{{ .spec.serviceName }}-keyvault"  # Replace with actual subscription ID
+      patches:
+        - type: FromCompositeFieldPath
+          fieldPath: "spec.serviceName"
+          toFieldPath: "metadata.name"
+
